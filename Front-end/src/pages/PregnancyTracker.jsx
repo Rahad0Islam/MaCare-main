@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import Sidebar from '../components/Sidebar';
 import api from '../utils/api';
 
-const PregnancyTracker = ({ onNavigate }) => {
+const PregnancyTracker = ({ standalone = false, onNavigate }) => {
   const [weeks, setWeeks] = useState([]);
   const [currentWeek, setCurrentWeek] = useState(0);
   const [selectedWeek, setSelectedWeek] = useState(null);
@@ -52,38 +51,29 @@ const PregnancyTracker = ({ onNavigate }) => {
     setSelectedWeek(val);
   };
 
-  if (loading) return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar userRole="mother" onNavigate={onNavigate} />
-      <main className="flex-1 p-8 flex items-center justify-center">
+  // Content component (reusable)
+  const TrackerContent = () => {
+    if (loading) return (
+      <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
           <p className="text-gray-600">লোড হচ্ছে...</p>
         </div>
-      </main>
-    </div>
-  );
+      </div>
+    );
 
-  if (error) return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar userRole="mother" onNavigate={onNavigate} />
-      <main className="flex-1 p-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">ত্রুটি: {error}</div>
-      </main>
-    </div>
-  );
+    if (error) return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        ত্রুটি: {error}
+      </div>
+    );
 
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar userRole="mother" onNavigate={onNavigate} />
-      <main className="flex-1 p-8">
+    return (
+      <>
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">গর্ভাবস্থা ট্র্যাকার</h1>
             <p className="text-sm text-gray-600">সাপ্তাহিক বিবরণ ও পরামর্শ (42 সপ্তাহ)</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => onNavigate && onNavigate('mother-dashboard')} className="px-4 py-2 bg-gray-100 rounded">পিছনে</button>
           </div>
         </div>
 
@@ -109,8 +99,8 @@ const PregnancyTracker = ({ onNavigate }) => {
               <div className="text-center mb-6">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">{cw.weekLabel}</h2>
                 <p className="text-lg text-gray-600">
-                  আকৃতি: {cw.babyLength?.mm ? `${cw.babyLength.mm} mm` : 'N/A'} •
-                  ওজন: {cw.babyWeight?.grams ? `${cw.babyWeight.grams} g` : 'N/A'}
+                  আকৃতি: {cw.babyLength?.mm || cw.baby?.length?.mm ? `${cw.babyLength?.mm || cw.baby?.length?.mm} mm` : 'N/A'} •
+                  ওজন: {cw.babyWeight?.grams || cw.baby?.weight?.grams ? `${cw.babyWeight?.grams || cw.baby?.weight?.grams} g` : 'N/A'}
                 </p>
               </div>
 
@@ -152,15 +142,15 @@ const PregnancyTracker = ({ onNavigate }) => {
               )}
 
               {/* Source link */}
-              {cw.source && (
+              {(cw.sources?.[0] || cw.source) && (
                 <div className="text-center text-sm text-gray-500 mb-6">
                   সূত্র: <a
                     className="text-primary-600 hover:underline font-medium"
-                    href={cw.source.url}
+                    href={(cw.sources?.[0] || cw.source)?.url}
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {cw.source.name}
+                    {(cw.sources?.[0] || cw.source)?.name}
                   </a>
                 </div>
               )}
@@ -186,9 +176,12 @@ const PregnancyTracker = ({ onNavigate }) => {
             </div>
           );
         })()}
-      </main>
-    </div>
-  );
+      </>
+    );
+  };
+
+  // Return just content when not standalone (embedded in MotherDashboard)
+  return <TrackerContent />;
 };
 
 export default PregnancyTracker;

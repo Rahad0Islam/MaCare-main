@@ -7,6 +7,7 @@ import PregnancyProfileView from '../components/PregnancyProfileView';
 import BabyProfileForm from '../components/BabyProfileForm';
 import BabyProfileView from '../components/BabyProfileView';
 import PregnancyCalculator from '../components/PregnancyCalculator';
+import PregnancyTracker from './PregnancyTracker';
 import VaccineTracker from '../components/VaccineTracker/VaccineTracker';
 import { useAuth } from '../utils/AuthContext';
 import api from '../utils/api';
@@ -15,7 +16,6 @@ import api from '../utils/api';
  * Mother Dashboard
  * Main dashboard for pregnant mothers with pregnancy tracking, appointments, and health info
  */
-const MotherDashboard = ({ onNavigate }) => {
 const MotherDashboard = () => {
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState(null);
@@ -40,6 +40,8 @@ const MotherDashboard = () => {
       if (!profileData) {
         await fetchProfileData();
       }
+    } else if (page === 'pregnancy') {
+      setCurrentPage('pregnancy');
     } else if (page === 'vaccine-schedule') {
       setCurrentPage('vaccine-schedule');
     } else {
@@ -208,7 +210,7 @@ const MotherDashboard = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
-        <Sidebar userRole="mother" onNavigate={onNavigate} />
+        <Sidebar userRole="mother" onNavigate={handleNavigation} />
         <main className="flex-1 p-8 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mx-auto mb-4"></div>
@@ -222,7 +224,7 @@ const MotherDashboard = () => {
   if (error) {
     return (
       <div className="flex min-h-screen bg-gray-50">
-        <Sidebar userRole="mother" onNavigate={onNavigate} />
+        <Sidebar userRole="mother" onNavigate={handleNavigation} />
         <main className="flex-1 p-8">
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             ত্রুটি: {error}
@@ -238,7 +240,6 @@ const MotherDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar userRole="mother" onNavigate={onNavigate} />
       <Sidebar userRole="mother" onNavigate={handleNavigation} />
       
       <main className="flex-1 p-8">
@@ -304,10 +305,6 @@ const MotherDashboard = () => {
           <>
             {/* NOTE: tracker is accessible from the sidebar — no extra dashboard button */}
             {/* Quick Stats */}
-            {/* Overview Tab */}
-            {activeTab === 'overview' && (
-              <>
-                {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {/* Pregnancy Week */}
               <div className="card bg-gradient-to-br from-pink-500 to-rose-500 text-white">
@@ -467,12 +464,10 @@ const MotherDashboard = () => {
               </div>
             )}
           </>
-            )}
-          </>
         )}
 
         {/* Doctor Advice Tab */}
-        {currentPage === 'dashboard' && activeTab === 'advice' && (
+        {activeTab === 'advice' && (
           <div className="card">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">সমস্ত ডাক্তারের পরামর্শ</h2>
             <DoctorAdviceList />
@@ -480,7 +475,7 @@ const MotherDashboard = () => {
         )}
 
         {/* Health Updates Tab */}
-        {currentPage === 'dashboard' && activeTab === 'health-updates' && (
+        {activeTab === 'health-updates' && (
           <div className="card">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">সমস্ত স্বাস্থ্য আপডেট</h2>
             <HealthUpdatesList />
@@ -488,7 +483,7 @@ const MotherDashboard = () => {
         )}
 
         {/* Checkups Tab */}
-        {currentPage === 'dashboard' && activeTab === 'checkups' && (
+        {activeTab === 'checkups' && (
           <div className="card">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">নির্ধারিত চেকআপ</h2>
             {dashboardData?.upcomingCheckups && dashboardData.upcomingCheckups.length > 0 ? (
@@ -528,25 +523,23 @@ const MotherDashboard = () => {
         )}
 
         {/* Emergency Button */}
-        {currentPage === 'dashboard' && (
-          <>
-            {/* Emergency Button */}
-            <div className="mt-8 card bg-gradient-to-r from-red-500 to-pink-500 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold mb-2">জরুরি সাহায্য প্রয়োজন?</h3>
-                  <p className="opacity-90">যেকোনো জরুরি পরিস্থিতিতে তাৎক্ষণিক সহায়তার জন্য কল করুন</p>
-                </div>
-                <button className="bg-white text-red-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors flex items-center">
-                  <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                  </svg>
-                  জরুরি কল
-                </button>
-              </div>
+        <div className="mt-8 card bg-gradient-to-r from-red-500 to-pink-500 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold mb-2">জরুরি সাহায্য প্রয়োজন?</h3>
+              <p className="opacity-90">যেকোনো জরুরি পরিস্থিতিতে তাৎক্ষণিক সহায়তার জন্য কল করুন</p>
             </div>
+            <button className="bg-white text-red-600 px-6 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors flex items-center">
+              <svg className="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+              </svg>
+              জরুরি কল
+            </button>
+          </div>
+        </div>
           </>
         )}
+        
         {/* Profile Page - Shohay Style */}
         {currentPage === 'profile' && (
           <>
@@ -750,6 +743,11 @@ const MotherDashboard = () => {
               </div>
             )}
           </>
+        )}
+        
+        {/* Pregnancy Tracker Page */}
+        {currentPage === 'pregnancy' && (
+          <PregnancyTracker />
         )}
 
         {/* Vaccine Schedule Page */}
