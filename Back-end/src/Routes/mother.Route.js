@@ -22,7 +22,14 @@ import {
   getNutritionWeeks,
   saveKickSession,
   getKickSessions,
-  deleteKickSession
+  deleteKickSession,
+  saveWeightEntry,
+  getWeightHistory,
+  deleteWeightEntry,
+  saveBPEntry,
+  getBPHistory,
+  deleteBPEntry,
+  getHealthTips
 } from "../Controllers/mother.controller.js";
 
 import {
@@ -66,6 +73,19 @@ router.route('/nutrition/weeks').get(jwtVerification, getNutritionWeeks);
 router.route('/kick-counter').post(jwtVerification, saveKickSession);
 router.route('/kick-counter').get(jwtVerification, getKickSessions);
 router.route('/kick-counter/:sessionId').delete(jwtVerification, deleteKickSession);
+
+// Weight & Height Tracking routes
+router.route('/weight-tracking').post(jwtVerification, saveWeightEntry);
+router.route('/weight-tracking').get(jwtVerification, getWeightHistory);
+router.route('/weight-tracking/:entryId').delete(jwtVerification, deleteWeightEntry);
+
+// BP Tracking routes
+router.route('/bp-tracking').post(jwtVerification, saveBPEntry);
+router.route('/bp-tracking').get(jwtVerification, getBPHistory);
+router.route('/bp-tracking/:entryId').delete(jwtVerification, deleteBPEntry);
+
+// Health Tips based on BP and BMI
+router.route('/health-tips').get(jwtVerification, getHealthTips);
 
 // Pregnancy Vaccine Tracker routes
 router.route('/vaccines').post(jwtVerification, createVaccine);

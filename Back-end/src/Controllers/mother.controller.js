@@ -9,6 +9,8 @@ import { HealthRecordUpdate } from "../Models/HealthRecordUpdate.model.js";
 import { CheckupNotification } from "../Models/CheckupNotification.model.js";
 import { MidwifeMotherAssignment } from "../Models/MidwifeMotherAssignment.model.js";
 import { KickCounter } from "../Models/KickCounter.model.js";
+import { WeightTracking } from "../Models/WeightTracking.model.js";
+import { BPTracking } from "../Models/BPTracking.model.js";
 import { ApiError } from "../Utils/ApiError.js";
 import { ApiResponse } from "../Utils/ApiResponse.js";
 import { AsynHandler } from "../Utils/AsyncHandler.js";
@@ -512,6 +514,354 @@ const deleteKickSession = AsynHandler(async (req, res) => {
   );
 });
 
+// ==================== WEIGHT & HEIGHT TRACKING ====================
+
+// 1. Save weight entry
+const saveWeightEntry = AsynHandler(async (req, res) => {
+  const motherID = req.user._id;
+  const { weight, height, date, pregnancyWeek, notes } = req.body;
+
+  if (!weight) {
+    throw new ApiError(400, "Weight is required");
+  }
+
+  // Get pregnancy week if not provided
+  let week = pregnancyWeek;
+  if (!week) {
+    const maternalRecord = await MaternalRecord.findOne({ motherID });
+    if (maternalRecord?.pregnancy?.lmpDate) {
+      const daysSinceLMP = Math.floor((Date.now() - new Date(maternalRecord.pregnancy.lmpDate)) / (1000 * 60 * 60 * 24));
+      week = Math.floor(daysSinceLMP / 7);
+    }
+  }
+
+  const entry = await WeightTracking.create({
+    motherID,
+    date: date ? new Date(date) : new Date(),
+    pregnancyWeek: week,
+    weight: parseFloat(weight),
+    height: height ? parseFloat(height) : undefined,
+    notes: notes || "",
+    recordedBy: 'mother'
+  });
+
+  // Calculate weight change
+  const weightChange = await entry.getWeightChange();
+
+  return res.status(201).json(
+    new ApiResponse(201, { ...entry.toObject(), weightChange }, "Weight entry saved successfully")
+  );
+});
+
+// 2. Get weight history
+const getWeightHistory = AsynHandler(async (req, res) => {
+  const motherID = req.user._id;
+  const { limit = 50, page = 1 } = req.query;
+
+  const entries = await WeightTracking.find({ motherID })
+    .sort({ date: -1 })
+    .limit(parseInt(limit))
+    .skip((parseInt(page) - 1) * parseInt(limit));
+
+  const total = await WeightTracking.countDocuments({ motherID });
+
+  // Calculate weight changes
+  const entriesWithChanges = await Promise.all(
+    entries.map(async (entry) => {
+      const weightChange = await entry.getWeightChange();
+      return { ...entry.toObject(), weightChange };
+    })
+  );
+
+  // Get statistics
+  const allEntries = await WeightTracking.find({ motherID }).sort({ date: 1 });
+  const startingWeight = allEntries.length > 0 ? allEntries[0].weight : null;
+  const currentWeight = allEntries.length > 0 ? allEntries[allEntries.length - 1].weight : null;
+  const totalGain = startingWeight && currentWeight ? currentWeight - startingWeight : 0;
+  const latestHeight = allEntries.find(e => e.height)?.height || null;
+
+  // Expected weight gain (typical: 11-16 kg for healthy BMI)
+  const expectedFinalWeight = startingWeight ? startingWeight + 13 : null;
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      entries: entriesWithChanges,
+      statistics: {
+        startingWeight,
+        currentWeight,
+        expectedFinalWeight,
+        totalGain,
+        height: latestHeight
+      },
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit))
+      }
+    }, "Weight history fetched successfully")
+  );
+});
+
+// 3. Delete weight entry
+const deleteWeightEntry = AsynHandler(async (req, res) => {
+  const motherID = req.user._id;
+  const { entryId } = req.params;
+
+  const entry = await WeightTracking.findOneAndDelete({
+    _id: entryId,
+    motherID
+  });
+
+  if (!entry) {
+    throw new ApiError(404, "Weight entry not found or unauthorized");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, {}, "Weight entry deleted successfully")
+  );
+});
+
+// BP Tracking Controllers
+
+// 1. Save BP entry
+const saveBPEntry = AsynHandler(async (req, res) => {
+  const motherID = req.user._id;
+  const { systolic, diastolic, date, time, notes } = req.body;
+
+  // Validate required fields
+  if (!systolic || !diastolic) {
+    throw new ApiError(400, "Systolic and diastolic readings are required");
+  }
+
+  // Validate BP ranges
+  if (systolic < 70 || systolic > 250) {
+    throw new ApiError(400, "Systolic BP must be between 70 and 250 mmHg");
+  }
+
+  if (diastolic < 40 || diastolic > 180) {
+    throw new ApiError(400, "Diastolic BP must be between 40 and 180 mmHg");
+  }
+
+  // Get BP status
+  const status = BPTracking.getBPStatus(systolic, diastolic);
+
+  // Get pregnancy week if maternal record exists
+  let pregnancyWeek = null;
+  const maternalRecord = await MaternalRecord.findOne({ motherID });
+  if (maternalRecord && maternalRecord.pregnancy && maternalRecord.pregnancy.lmpDate) {
+    const lmpDate = new Date(maternalRecord.pregnancy.lmpDate);
+    const today = new Date();
+    const diffTime = Math.abs(today - lmpDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    pregnancyWeek = Math.floor(diffDays / 7);
+  }
+
+  // Create BP entry
+  const bpEntry = await BPTracking.create({
+    motherID,
+    systolic: Number(systolic),
+    diastolic: Number(diastolic),
+    date: date ? new Date(date) : new Date(),
+    time: time || new Date().toLocaleTimeString('en-US', { hour12: false }),
+    status,
+    pregnancyWeek,
+    notes
+  });
+
+  return res.status(201).json(
+    new ApiResponse(201, bpEntry, "BP entry saved successfully")
+  );
+});
+
+// 2. Get BP history with statistics
+const getBPHistory = AsynHandler(async (req, res) => {
+  const motherID = req.user._id;
+
+  // Get all BP entries sorted by date (newest first)
+  const entries = await BPTracking.find({ motherID })
+    .sort({ date: -1, createdAt: -1 })
+    .lean();
+
+  // Calculate statistics
+  let statistics = {
+    latestReading: null,
+    averageSystolic: 0,
+    averageDiastolic: 0,
+    totalReadings: entries.length,
+    normalCount: 0,
+    elevatedCount: 0,
+    highCount: 0,
+    crisisCount: 0
+  };
+
+  if (entries.length > 0) {
+    statistics.latestReading = entries[0];
+
+    // Calculate averages
+    const totalSystolic = entries.reduce((sum, entry) => sum + entry.systolic, 0);
+    const totalDiastolic = entries.reduce((sum, entry) => sum + entry.diastolic, 0);
+    statistics.averageSystolic = Math.round(totalSystolic / entries.length);
+    statistics.averageDiastolic = Math.round(totalDiastolic / entries.length);
+
+    // Count status types
+    entries.forEach(entry => {
+      if (entry.status === 'normal') statistics.normalCount++;
+      else if (entry.status === 'elevated') statistics.elevatedCount++;
+      else if (entry.status === 'crisis') statistics.crisisCount++;
+      else statistics.highCount++;
+    });
+  }
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        entries,
+        statistics
+      },
+      "BP history fetched successfully"
+    )
+  );
+});
+
+// 3. Delete BP entry
+const deleteBPEntry = AsynHandler(async (req, res) => {
+  const motherID = req.user._id;
+  const { entryId } = req.params;
+
+  const entry = await BPTracking.findOneAndDelete({
+    _id: entryId,
+    motherID
+  });
+
+  if (!entry) {
+    throw new ApiError(404, "BP entry not found or unauthorized");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, {}, "BP entry deleted successfully")
+  );
+});
+
+// Get personalized health tips based on BP and BMI
+const getHealthTips = AsynHandler(async (req, res) => {
+  const motherID = req.user._id;
+
+  try {
+    // Get latest BP entry
+    const latestBP = await BPTracking.findOne({ motherID })
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
+
+    // Get latest weight entry (for BMI)
+    const latestWeight = await WeightTracking.findOne({ motherID })
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
+
+    const tips = {
+      bpTips: null,
+      bmiTips: null,
+      hasCriticalAlert: false
+    };
+
+    // Analyze BP and provide tips
+    if (latestBP) {
+      const { systolic, diastolic, status } = latestBP;
+      
+      // High BP (≥140/90)
+      if (systolic >= 140 || diastolic >= 90) {
+        const highBPData = JSON.parse(
+          fs.readFileSync(path.join(__dirname, '../Utils/health_tips/high_bp.json'), 'utf-8')
+        );
+        tips.bpTips = {
+          ...highBPData,
+          currentReading: { systolic, diastolic },
+          status,
+          recordedDate: latestBP.date
+        };
+        if (status === 'crisis') {
+          tips.hasCriticalAlert = true;
+        }
+      }
+      // Low BP (<90/60)
+      else if (systolic < 90 || diastolic < 60) {
+        const lowBPData = JSON.parse(
+          fs.readFileSync(path.join(__dirname, '../Utils/health_tips/low_bp.json'), 'utf-8')
+        );
+        tips.bpTips = {
+          ...lowBPData,
+          currentReading: { systolic, diastolic },
+          status,
+          recordedDate: latestBP.date
+        };
+      }
+    }
+
+    // Analyze BMI and provide tips
+    if (latestWeight && latestWeight.height) {
+      const { weight, height, bmi } = latestWeight;
+      
+      const bmiAssessmentData = JSON.parse(
+        fs.readFileSync(path.join(__dirname, '../Utils/health_tips/bmi_assessment.json'), 'utf-8')
+      );
+
+      // Find matching BMI category
+      let matchedCategory = null;
+      
+      for (const category of bmiAssessmentData.categories) {
+        const range = category.range;
+        
+        if (range.includes('< 16.0') && bmi < 16.0) {
+          matchedCategory = category;
+          tips.hasCriticalAlert = true;
+          break;
+        } else if (range.includes('16.0 – 18.4') && bmi >= 16.0 && bmi <= 18.4) {
+          matchedCategory = category;
+          break;
+        } else if (range.includes('18.5 – 24.9') && bmi >= 18.5 && bmi <= 24.9) {
+          matchedCategory = category;
+          break;
+        } else if (range.includes('25.0 – 29.9') && bmi >= 25.0 && bmi <= 29.9) {
+          matchedCategory = category;
+          break;
+        } else if (range.includes('≥ 30.0') && bmi >= 30.0) {
+          matchedCategory = category;
+          if (bmi >= 35.0) {
+            tips.hasCriticalAlert = true;
+          }
+          break;
+        }
+      }
+
+      if (matchedCategory) {
+        tips.bmiTips = {
+          label: bmiAssessmentData.label,
+          currentBMI: bmi,
+          currentWeight: weight,
+          height: height,
+          category: matchedCategory.category,
+          range: matchedCategory.range,
+          riskLevel: matchedCategory.riskLevel,
+          healthRisks: matchedCategory.healthRisks,
+          healthTips: matchedCategory.healthTips,
+          recommendedFollowUp: matchedCategory.recommendedFollowUp,
+          action: matchedCategory.action,
+          recordedDate: latestWeight.date
+        };
+      }
+    }
+
+    return res.status(200).json(
+      new ApiResponse(200, tips, "Health tips fetched successfully")
+    );
+
+  } catch (error) {
+    console.error('Error reading health tips:', error);
+    throw new ApiError(500, "Failed to fetch health tips");
+  }
+});
+
 export {
     getMotherProfile,
     getMaternalRecord,
@@ -533,5 +883,12 @@ export {
     getNutritionWeeks,
     saveKickSession,
     getKickSessions,
-    deleteKickSession
+    deleteKickSession,
+    saveWeightEntry,
+    getWeightHistory,
+    deleteWeightEntry,
+    saveBPEntry,
+    getBPHistory,
+    deleteBPEntry,
+    getHealthTips
 }

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import DoctorAdviceList from '../components/DoctorAdviceList';
 import HealthUpdatesList from '../components/HealthUpdatesList';
+import HealthTools from '../components/HealthTools';
+import HealthTipsCard from '../components/HealthTipsCard';
 import ProfileMenu from '../components/ProfileMenu';
 import PregnancyProfileView from '../components/PregnancyProfileView';
 import BabyProfileForm from '../components/BabyProfileForm';
@@ -293,16 +295,6 @@ const MotherDashboard = () => {
               স্বাস্থ্য আপডেট
             </button>
             <button
-              onClick={() => setActiveTab('kick-counter')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'kick-counter'
-                  ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              কিক কাউন্টার
-            </button>
-            <button
               onClick={() => setActiveTab('checkups')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'checkups'
@@ -491,24 +483,12 @@ const MotherDashboard = () => {
 
         {/* Health Updates Tab */}
         {activeTab === 'health-updates' && (
-          <div className="card">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">সমস্ত স্বাস্থ্য আপডেট</h2>
-            <HealthUpdatesList />
-          </div>
-        )}
-
-        {/* Kick Counter Tab */}
-        {activeTab === 'kick-counter' && (
           <div className="space-y-6">
             <div className="card">
-              <KickCounter 
-                onSessionComplete={() => {
-                  // Optionally refresh history or show success message
-                }}
-              />
+              <HealthTools />
             </div>
             <div className="card">
-              <KickCounterHistory />
+              <HealthTipsCard />
             </div>
           </div>
         )}

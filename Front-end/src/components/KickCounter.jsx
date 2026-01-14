@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, CheckCircle, Clock, Activity } from 'lucide-react';
 
-const KickCounter = ({ onSessionComplete }) => {
+const KickCounter = ({ onSessionComplete, inModal = false }) => {
   const [kickCount, setKickCount] = useState(0);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [firstKickTime, setFirstKickTime] = useState(null);
@@ -138,7 +138,7 @@ const KickCounter = ({ onSessionComplete }) => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl shadow-xl p-8 max-w-2xl mx-auto">
+    <div className={inModal ? "" : "bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl shadow-xl p-8 max-w-2xl mx-auto"}>
       {/* Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-pink-100 rounded-full mb-4">
