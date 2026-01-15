@@ -20,11 +20,10 @@ const Sidebar = ({ userRole = 'mother', onNavigate }) => {
   ];
 
   const doctorMenu = [
-    { name: 'ড্যাশবোর্ড', icon: 'home', link: '#dashboard' },
-    { name: 'রোগীদের তালিকা', icon: 'users', link: '#patients' },
-    { name: 'অ্যাপয়েন্টমেন্ট', icon: 'calendar', link: '#appointments' },
-    { name: 'মেসেজ', icon: 'message', link: '#messages' },
-    { name: 'রিপোর্ট', icon: 'chart', link: '#reports' },
+    { name: 'ড্যাশবোর্ড', icon: 'home', action: 'overview' },
+    { name: 'রোগীদের তালিকা', icon: 'users', action: 'search-advice' },
+    { name: 'অ্যাপয়েন্টমেন্ট', icon: 'calendar', action: 'appointments' },
+    { name: 'পরামর্শের ইতিহাস', icon: 'message', action: 'history' },
   ];
 
   const midwifeMenu = [

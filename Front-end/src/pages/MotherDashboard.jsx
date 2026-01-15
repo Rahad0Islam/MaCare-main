@@ -19,6 +19,90 @@ import HealthArticles from './HealthArticles';
 import { useAuth } from '../utils/AuthContext';
 import api from '../utils/api';
 
+// Demo appointments with doctors data
+const DEMO_APPOINTMENTS = [
+  {
+    _id: 'apt1',
+    doctorName: 'ডা. সাবিনা আক্তার',
+    specialization: 'গাইনোকোলজিস্ট ও প্রসূতি বিশেষজ্ঞ',
+    hospital: 'ওসমানী মেডিকেল কলেজ হাসপাতাল, সিলেট',
+    location: 'সিলেট সদর, সিলেট',
+    phone: '০১৭১২-৩৪৫৬৭৮',
+    rating: 4.8,
+    reviews: 256,
+    experience: '১৫ বছর',
+    appointmentDate: '2026-01-18T10:00:00',
+    status: 'confirmed',
+    consultationType: 'নিয়মিত চেকআপ',
+    fees: '১২০০ টাকা',
+    notes: 'গর্ভাবস্থার ২৪ সপ্তাহের চেকআপ এবং আলট্রাসাউন্ড'
+  },
+  {
+    _id: 'apt2',
+    doctorName: 'ডা. মোহাম্মদ রহিম',
+    specialization: 'প্রসূতি ও স্ত্রীরোগ বিশেষজ্ঞ',
+    hospital: 'জাফলং হেলথ কমপ্লেক্স',
+    location: 'জাফলং, গোয়াইনঘাট, সিলেট',
+    phone: '০১৮১৫-৯৮৭৬৫৪',
+    rating: 4.6,
+    reviews: 189,
+    experience: '১২ বছর',
+    appointmentDate: '2026-01-20T15:30:00',
+    status: 'pending',
+    consultationType: 'ফলোআপ পরামর্শ',
+    fees: '৮০০ টাকা',
+    notes: 'রক্তচাপ এবং ডায়াবেটিস টেস্ট রিপোর্ট নিয়ে আসুন'
+  },
+  {
+    _id: 'apt3',
+    doctorName: 'ডা. ফারহানা ইসলাম',
+    specialization: 'মাতৃস্বাস্থ্য বিশেষজ্ঞ',
+    hospital: 'মাউন্ট আদেন হাসপাতাল, সিলেট',
+    location: 'আম্বরখানা, সিলেট',
+    phone: '০১৯২৩-৪৫৬৭৮৯',
+    rating: 4.9,
+    reviews: 342,
+    experience: '১৮ বছর',
+    appointmentDate: '2026-01-25T11:00:00',
+    status: 'confirmed',
+    consultationType: 'বিশেষ পরামর্শ',
+    fees: '১৫০০ টাকা',
+    notes: 'উচ্চ ঝুঁকিপূর্ণ গর্ভাবস্থার বিশেষ পরামর্শ'
+  },
+  {
+    _id: 'apt4',
+    doctorName: 'ডা. নাজমুল হক',
+    specialization: 'আলট্রাসনোগ্রাফি বিশেষজ্ঞ',
+    hospital: 'লালাখাল ডায়াগনস্টিক সেন্টার',
+    location: 'লালাখাল, জৈন্তাপুর, সিলেট',
+    phone: '০১৭৩৪-৮৭৬৫৪৩',
+    rating: 4.7,
+    reviews: 178,
+    experience: '১০ বছর',
+    appointmentDate: '2026-01-22T09:00:00',
+    status: 'confirmed',
+    consultationType: 'আলট্রাসাউন্ড স্ক্যান',
+    fees: '২০০০ টাকা',
+    notes: '৪ডি আলট্রাসাউন্ড এবং শিশুর স্বাস্থ্য পরীক্ষা'
+  },
+  {
+    _id: 'apt5',
+    doctorName: 'ডা. তাসনিম জাহান',
+    specialization: 'নিউট্রিশন ও ডায়েট কনসালট্যান্ট',
+    hospital: 'রাতারগুল ওয়েলনেস সেন্টার',
+    location: 'রাতারগুল, সিলেট সদর',
+    phone: '০১৬৮৮-৭৬৫৪৩২',
+    rating: 4.5,
+    reviews: 134,
+    experience: '৮ বছর',
+    appointmentDate: '2026-01-28T14:00:00',
+    status: 'pending',
+    consultationType: 'পুষ্টি পরামর্শ',
+    fees: '৬০০ টাকা',
+    notes: 'গর্ভকালীন খাদ্য তালিকা এবং পুষ্টি পরিকল্পনা'
+  }
+];
+
 /**
  * Mother Dashboard
  * Main dashboard for pregnant mothers with pregnancy tracking, appointments, and health info
@@ -36,6 +120,7 @@ const MotherDashboard = () => {
   const [selectedBaby, setSelectedBaby] = useState(null); // Selected baby for viewing
   const [reportView, setReportView] = useState('menu'); // menu, add, view
   const [childActiveTab, setChildActiveTab] = useState('overview'); // Child dashboard tabs
+  const [showNotifications, setShowNotifications] = useState(true); // Notification box visibility
 
   // Demo child data
   const demoChild = {
@@ -277,6 +362,171 @@ const MotherDashboard = () => {
       <Sidebar userRole="mother" onNavigate={handleNavigation} />
       
       <main className="flex-1 p-8">
+        {/* Important Notifications - Fixed Top Right */}
+        <div className={`fixed top-4 right-4 z-50 transition-all duration-300 ${showNotifications ? 'w-96' : 'w-auto'}`}>
+          {showNotifications ? (
+            <div className="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-300 rounded-xl shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-red-500 to-orange-500 px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-6 h-6 text-white animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <h3 className="text-white font-bold text-lg">জরুরি বিজ্ঞপ্তি</h3>
+                </div>
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-1 transition-colors"
+                  title="মিনিমাইজ করুন"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Notifications Content */}
+              <div className="p-4 max-h-96 overflow-y-auto space-y-3">
+                {/* Alert 1 - High Priority */}
+                <div className="bg-white border-l-4 border-red-600 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-bold text-red-900">অতি জরুরি</h4>
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full font-medium">উচ্চ অগ্রাধিকার</span>
+                      </div>
+                      <p className="text-gray-800 text-sm mb-2 leading-relaxed">
+                        আপনার রক্তচাপ স্বাভাবিকের চেয়ে বেশি। <span className="font-semibold text-red-700">অতি দ্রুত চিকিৎসকের সাথে যোগাযোগ করুন।</span>
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-600">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                        <span>২ ঘন্টা আগে</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alert 2 - Medium Priority */}
+                <div className="bg-white border-l-4 border-orange-500 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-bold text-orange-900">সাপ্তাহিক চেকআপ</h4>
+                        <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">মাঝারি</span>
+                      </div>
+                      <p className="text-gray-800 text-sm mb-2 leading-relaxed">
+                        আগামীকাল আপনার সাপ্তাহিক চেকআপ। মিডওয়াইফের সাথে দেখা করতে ভুলবেন না।
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-600">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                        <span>৫ ঘন্টা আগে</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alert 3 - Information */}
+                <div className="bg-white border-l-4 border-blue-500 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                          <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-bold text-blue-900">নতুন পরামর্শ</h4>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">তথ্য</span>
+                      </div>
+                      <p className="text-gray-800 text-sm mb-2 leading-relaxed">
+                        ডা. সাবিনা আক্তার আপনার জন্য নতুন স্বাস্থ্য পরামর্শ দিয়েছেন।
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-600">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                        <span>১ দিন আগে</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alert 4 - Reminder */}
+                <div className="bg-white border-l-4 border-purple-500 rounded-lg p-4 shadow-md hover:shadow-lg transition-shadow">
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-bold text-purple-900">ওষুধের সময়</h4>
+                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium">রিমাইন্ডার</span>
+                      </div>
+                      <p className="text-gray-800 text-sm mb-2 leading-relaxed">
+                        আয়রন ট্যাবলেট খাওয়ার সময় হয়েছে। খাবারের পর নিয়মিত খান।
+                      </p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-600">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                        <span>এখনই</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+                <button className="w-full text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center justify-center space-x-1">
+                  <span>সকল বিজ্ঞপ্তি দেখুন</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowNotifications(true)}
+              className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full p-3 shadow-2xl hover:shadow-xl transition-all hover:scale-110 relative"
+              title="বিজ্ঞপ্তি দেখুন"
+            >
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+              </svg>
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-xs font-bold text-red-900 animate-pulse">
+                4
+              </span>
+            </button>
+          )}
+        </div>
+
         {currentPage === 'dashboard' && (
           <>
             {/* Header */}
@@ -329,7 +579,7 @@ const MotherDashboard = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              নির্ধারিত চেকআপ
+              অ্যাপয়েন্টমেন্ট
             </button>
             <button
               onClick={() => setActiveTab('health-problems')}
@@ -340,6 +590,16 @@ const MotherDashboard = () => {
               }`}
             >
               সাধারণ স্বাস্থ্য সমস্যা
+            </button>
+            <button
+              onClick={() => setActiveTab('family-planning')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'family-planning'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              পরিবার পরিকল্পনা
             </button>
             <button
               onClick={() => setActiveTab('reports')}
@@ -564,43 +824,147 @@ const MotherDashboard = () => {
           </div>
         )}
 
-        {/* Checkups Tab */}
+        {/* Checkups Tab - Now Appointments */}
         {activeTab === 'checkups' && (
-          <div className="card">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">নির্ধারিত চেকআপ</h2>
-            {dashboardData?.upcomingCheckups && dashboardData.upcomingCheckups.length > 0 ? (
-              <div className="space-y-3">
-                {dashboardData.upcomingCheckups.map((checkup) => (
-                  <div key={checkup._id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{checkup.checkupType}</h3>
-                        <p className="text-sm text-gray-600">
-                          {checkup.midwifeID?.FullName} এর সাথে
-                        </p>
+          <div>
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">আমার অ্যাপয়েন্টমেন্ট</h2>
+              <p className="text-gray-600">ডাক্তারদের সাথে নির্ধারিত সাক্ষাৎ</p>
+            </div>
+
+            <div className="space-y-4">
+              {DEMO_APPOINTMENTS.map((appointment) => (
+                <div key={appointment._id} className="card hover:shadow-lg transition-shadow">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Doctor Info */}
+                    <div className="flex-shrink-0">
+                      <div className="w-24 h-24 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center text-white">
+                        <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                        </svg>
                       </div>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        checkup.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        checkup.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {checkup.status === 'pending' ? 'অপেক্ষমাণ' : checkup.status === 'completed' ? 'সম্পন্ন' : checkup.status}
-                      </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      নির্ধারিত: {new Date(checkup.scheduledDate).toLocaleDateString('bn-BD')} {new Date(checkup.scheduledDate).toLocaleTimeString('bn-BD')}
-                    </p>
-                    {checkup.notes && (
-                      <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{checkup.notes}</p>
-                    )}
+
+                    {/* Appointment Details */}
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="text-xl font-bold text-gray-900">{appointment.doctorName}</h3>
+                          <p className="text-primary-600 font-medium">{appointment.specialization}</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          appointment.status === 'confirmed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {appointment.status === 'confirmed' ? '✓ নিশ্চিত' : '⏱ অপেক্ষমাণ'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        {/* Hospital & Location */}
+                        <div className="flex items-start space-x-2">
+                          <svg className="w-5 h-5 text-gray-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{appointment.hospital}</p>
+                            <p className="text-xs text-gray-500">{appointment.location}</p>
+                          </div>
+                        </div>
+
+                        {/* Phone */}
+                        <div className="flex items-center space-x-2">
+                          <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                          </svg>
+                          <p className="text-sm text-gray-600">{appointment.phone}</p>
+                        </div>
+
+                        {/* Date & Time */}
+                        <div className="flex items-center space-x-2">
+                          <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                          </svg>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {new Date(appointment.appointmentDate).toLocaleDateString('bn-BD', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              সময়: {new Date(appointment.appointmentDate).toLocaleTimeString('bn-BD', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Rating & Experience */}
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center space-x-1">
+                            <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span className="text-sm font-semibold text-gray-900">{appointment.rating}</span>
+                            <span className="text-xs text-gray-500">({appointment.reviews} রিভিউ)</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            অভিজ্ঞতা: {appointment.experience}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Consultation Type & Fees */}
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                          {appointment.consultationType}
+                        </span>
+                        <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
+                          ফি: {appointment.fees}
+                        </span>
+                      </div>
+
+                      {/* Notes */}
+                      {appointment.notes && (
+                        <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded">
+                          <p className="text-sm text-gray-700">
+                            <span className="font-medium">নোট:</span> {appointment.notes}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3 mt-4">
+                        <button className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                          রিমাইন্ডার সেট করুন
+                        </button>
+                        <button className="flex-1 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                          পুনঃনির্ধারণ করুন
+                        </button>
+                        <button className="border border-red-300 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors font-medium">
+                          বাতিল
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                <p>কোনো নির্ধারিত চেকআপ নেই</p>
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
+
+            {/* Add New Appointment Button */}
+            <div className="mt-6">
+              <button className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-4 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center space-x-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                <span>নতুন অ্যাপয়েন্টমেন্ট বুক করুন</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -609,6 +973,348 @@ const MotherDashboard = () => {
           <div className="card">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">সাধারণ স্বাস্থ্য সমস্যা</h2>
             <HealthArticles onBack={() => setActiveTab('overview')} />
+          </div>
+        )}
+
+        {/* Family Planning Tab */}
+        {activeTab === 'family-planning' && (
+          <div>
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">পরিবার পরিকল্পনা</h2>
+              <p className="text-gray-600">সঠিক জ্ঞান দিয়ে আপনার পরিবারের ভবিষ্যৎ পরিকল্পনা করুন</p>
+            </div>
+
+            {/* Demo Family Planning Articles */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Article 1 */}
+              <div className="card hover:shadow-xl transition-all">
+                <div className="flex items-start space-x-4 mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">পরিবার পরিকল্পনা কী এবং কেন প্রয়োজন?</h3>
+                    <span className="inline-block bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-xs font-medium">মূল তথ্য</span>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  পরিবার পরিকল্পনা হলো দম্পতির সিদ্ধান্ত নেওয়ার প্রক্রিয়া কখন এবং কতজন সন্তান নেবেন। এটি মা ও শিশুর স্বাস্থ্য সুরক্ষা, পরিবারের আর্থিক স্থিতিশীলতা এবং শিক্ষার মানোন্নয়নে সহায়ক।
+                </p>
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">মূল সুবিধা:</h4>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-start">
+                      <svg className="w-5 h-5 text-green-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      মাতৃ ও শিশু মৃত্যুহার হ্রাস
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="w-5 h-5 text-green-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      দুই সন্তানের মধ্যে যথাযথ ব্যবধান
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="w-5 h-5 text-green-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      পরিবারের আর্থিক সচ্ছলতা
+                    </li>
+                    <li className="flex items-start">
+                      <svg className="w-5 h-5 text-green-600 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      নারীর শিক্ষা ও ক্যারিয়ার গঠন
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Article 2 */}
+              <div className="card hover:shadow-xl transition-all">
+                <div className="flex items-start space-x-4 mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">জন্মনিয়ন্ত্রণ পদ্ধতি সমূহ</h3>
+                    <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">গুরুত্বপূর্ণ</span>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  বিভিন্ন ধরনের নিরাপদ এবং কার্যকর জন্মনিয়ন্ত্রণ পদ্ধতি রয়েছে। প্রতিটি পদ্ধতির সুবিধা ও অসুবিধা জেনে ডাক্তারের পরামর্শ অনুযায়ী সঠিক পদ্ধতি বেছে নিন।
+                </p>
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">প্রধান পদ্ধতি সমূহ:</h4>
+                  <div className="space-y-3">
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-1">অস্থায়ী পদ্ধতি:</h5>
+                      <p className="text-sm text-gray-700">খাওয়ার বড়ি, ইনজেকশন, কপার-টি, ইমপ্ল্যান্ট, কনডম</p>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-1">স্থায়ী পদ্ধতি:</h5>
+                      <p className="text-sm text-gray-700">পুরুষ বন্ধ্যাকরণ (ভ্যাসেক্টমি), নারী বন্ধ্যাকরণ (টিউবেক্টমি)</p>
+                    </div>
+                    <div className="bg-yellow-50 p-3 rounded-lg">
+                      <h5 className="font-semibold text-gray-900 mb-1">জরুরি পদ্ধতি:</h5>
+                      <p className="text-sm text-gray-700">ইমার্জেন্সি কন্ট্রাসেপটিভ পিল (৭২ ঘন্টার মধ্যে)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Article 3 */}
+              <div className="card hover:shadow-xl transition-all">
+                <div className="flex items-start space-x-4 mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">গর্ভধারণের আদর্শ ব্যবধান</h3>
+                    <span className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">সুপারিশ</span>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  বিশ্ব স্বাস্থ্য সংস্থা (WHO) এবং চিকিৎসা বিশেষজ্ঞরা দুই গর্ভধারণের মধ্যে কমপক্ষে ২-৩ বছরের ব্যবধান রাখার পরামর্শ দেন।
+                </p>
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">কেন এই ব্যবধান জরুরি:</h4>
+                  <ul className="space-y-2 text-gray-700">
+                    <li className="flex items-start">
+                      <span className="text-purple-600 font-bold mr-2">•</span>
+                      মায়ের শরীর সম্পূর্ণভাবে সুস্থ হওয়ার সময়
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-purple-600 font-bold mr-2">•</span>
+                      শিশুর সঠিক পুষ্টি ও বৃদ্ধি নিশ্চিতকরণ
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-purple-600 font-bold mr-2">•</span>
+                      জটিলতার ঝুঁকি কমানো (প্রিম্যাচিউর ডেলিভারি, কম ওজন)
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-purple-600 font-bold mr-2">•</span>
+                      পরিবারের মানসিক ও আর্থিক প্রস্তুতি
+                    </li>
+                  </ul>
+                  <div className="mt-4 bg-purple-50 p-4 rounded-lg">
+                    <p className="text-sm text-purple-900 font-medium">
+                      💡 সুপারিশ: প্রসবের পর কমপক্ষে ৬ মাস বুকের দুধ খাওয়ান এবং ২৪ মাস পর্যন্ত চালিয়ে যান।
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Article 4 */}
+              <div className="card hover:shadow-xl transition-all">
+                <div className="flex items-start space-x-4 mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">প্রজনন স্বাস্থ্য সেবা</h3>
+                    <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">সেবা</span>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  সরকারি হাসপাতাল, কমিউনিটি ক্লিনিক এবং স্বাস্থ্য কেন্দ্রে বিনামূল্যে পরিবার পরিকল্পনা পরামর্শ এবং সেবা পাওয়া যায়।
+                </p>
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">বিনামূল্যে সেবা সমূহ:</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    <div className="flex items-center bg-green-50 p-3 rounded-lg">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-900">পরিবার পরিকল্পনা পরামর্শ</span>
+                    </div>
+                    <div className="flex items-center bg-green-50 p-3 rounded-lg">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-900">বিভিন্ন পদ্ধতি সরবরাহ</span>
+                    </div>
+                    <div className="flex items-center bg-green-50 p-3 rounded-lg">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-900">ফলোআপ সেবা ও জটিলতা ব্যবস্থাপনা</span>
+                    </div>
+                    <div className="flex items-center bg-green-50 p-3 rounded-lg">
+                      <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-900">প্রজনন স্বাস্থ্য পরীক্ষা</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 bg-blue-50 border-l-4 border-blue-400 p-4">
+                    <p className="text-sm text-blue-900">
+                      <span className="font-semibold">হটলাইন:</span> পরিবার পরিকল্পনা বিষয়ে পরামর্শের জন্য কল করুন <span className="font-bold">১৬২৬৭</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Article 5 */}
+              <div className="card hover:shadow-xl transition-all">
+                <div className="flex items-start space-x-4 mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">ভুল ধারণা ও সত্য তথ্য</h3>
+                    <span className="inline-block bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">সচেতনতা</span>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  পরিবার পরিকল্পনা নিয়ে অনেক ভুল ধারণা প্রচলিত আছে। সঠিক তথ্য জেনে সচেতন সিদ্ধান্ত নিন।
+                </p>
+                <div className="border-t pt-4">
+                  <div className="space-y-4">
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <div className="flex items-start">
+                        <span className="text-red-600 font-bold text-xl mr-3">✗</span>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 mb-1">ভুল ধারণা:</p>
+                          <p className="text-sm text-gray-700">পরিবার পরিকল্পনা পদ্ধতি ব্যবহারে ক্যান্সার হয়</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="flex items-start">
+                        <span className="text-green-600 font-bold text-xl mr-3">✓</span>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 mb-1">সত্য:</p>
+                          <p className="text-sm text-gray-700">আধুনিক পদ্ধতিগুলো নিরাপদ এবং ক্যান্সারের সাথে কোনো সম্পর্ক নেই</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <div className="flex items-start">
+                        <span className="text-red-600 font-bold text-xl mr-3">✗</span>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 mb-1">ভুল ধারণা:</p>
+                          <p className="text-sm text-gray-700">বড়ি খেলে ভবিষ্যতে সন্তান হবে না</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="flex items-start">
+                        <span className="text-green-600 font-bold text-xl mr-3">✓</span>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 mb-1">সত্য:</p>
+                          <p className="text-sm text-gray-700">বড়ি বন্ধ করলে স্বাভাবিক প্রজনন ক্ষমতা ফিরে আসে</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <div className="flex items-start">
+                        <span className="text-red-600 font-bold text-xl mr-3">✗</span>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 mb-1">ভুল ধারণা:</p>
+                          <p className="text-sm text-gray-700">স্তন্যদানকালে গর্ভবতী হওয়া সম্ভব নয়</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="flex items-start">
+                        <span className="text-green-600 font-bold text-xl mr-3">✓</span>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 mb-1">সত্য:</p>
+                          <p className="text-sm text-gray-700">মাসিক ফিরে আসার আগেই গর্ভধারণ সম্ভব, তাই জন্মনিয়ন্ত্রণ প্রয়োজন</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Article 6 */}
+              <div className="card hover:shadow-xl transition-all">
+                <div className="flex items-start space-x-4 mb-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">পুরুষের ভূমিকা</h3>
+                    <span className="inline-block bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-medium">অংশগ্রহণ</span>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  পরিবার পরিকল্পনায় পুরুষের সক্রিয় অংশগ্রহণ অত্যন্ত গুরুত্বপূর্ণ। এটি একটি যৌথ দায়িত্ব এবং সিদ্ধান্ত।
+                </p>
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">পুরুষের দায়িত্ব:</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start bg-yellow-50 p-3 rounded-lg">
+                      <span className="text-2xl mr-3">🤝</span>
+                      <div>
+                        <h5 className="font-semibold text-gray-900 text-sm mb-1">যৌথ সিদ্ধান্ত</h5>
+                        <p className="text-xs text-gray-700">স্ত্রীর সাথে আলোচনা করে পদ্ধতি বেছে নিন</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start bg-yellow-50 p-3 rounded-lg">
+                      <span className="text-2xl mr-3">💊</span>
+                      <div>
+                        <h5 className="font-semibold text-gray-900 text-sm mb-1">পদ্ধতি ব্যবহার</h5>
+                        <p className="text-xs text-gray-700">কনডম বা ভ্যাসেক্টমি (স্থায়ী) বিবেচনা করুন</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start bg-yellow-50 p-3 rounded-lg">
+                      <span className="text-2xl mr-3">❤️</span>
+                      <div>
+                        <h5 className="font-semibold text-gray-900 text-sm mb-1">সহযোগিতা</h5>
+                        <p className="text-xs text-gray-700">স্ত্রীকে ডাক্তারের কাছে নিয়ে যান এবং সেবা গ্রহণে সহায়তা করুন</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start bg-yellow-50 p-3 rounded-lg">
+                      <span className="text-2xl mr-3">📚</span>
+                      <div>
+                        <h5 className="font-semibold text-gray-900 text-sm mb-1">জ্ঞান অর্জন</h5>
+                        <p className="text-xs text-gray-700">পরিবার পরিকল্পনা সম্পর্কে সঠিক তথ্য জানুন</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">
+                    <p className="text-sm text-gray-900">
+                      <span className="font-bold">মনে রাখুন:</span> পরিবার পরিকল্পনা শুধু নারীর দায়িত্ব নয়, এটি দম্পতির যৌথ সিদ্ধান্ত এবং দায়িত্ব।
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Section */}
+            <div className="mt-8 bg-gradient-to-br from-primary-500 to-secondary-500 text-white rounded-2xl p-8">
+              <div className="text-center">
+                <h3 className="text-2xl font-bold mb-4">আরও তথ্যের জন্য</h3>
+                <p className="mb-6 opacity-90">পরিবার পরিকল্পনা বিষয়ে বিশেষজ্ঞ পরামর্শের জন্য আমাদের সাথে যোগাযোগ করুন</p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button className="bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all">
+                    ডাক্তারের সাথে পরামর্শ করুন
+                  </button>
+                  <button className="bg-transparent border-2 border-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary-600 transition-all">
+                    হটলাইন: ১৬২৬৭
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

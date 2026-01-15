@@ -1,4 +1,5 @@
 import React from 'react';
+import heroImage from '../assets/DemoFront.jpeg';
 
 /**
  * Hero Section Component
@@ -38,17 +39,14 @@ const Hero = () => {
             </button>
           </div>
 
-          {/* Hero Image / Illustration Placeholder */}
+          {/* Hero Image / Illustration */}
           <div className="max-w-4xl mx-auto">
             <div className="bg-white rounded-2xl shadow-2xl p-8">
-              <div className="aspect-video bg-gradient-to-br from-primary-100 to-accent-100 rounded-xl flex items-center justify-center">
-                <div className="text-center">
-                  <svg className="w-24 h-24 mx-auto text-primary-600 mb-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                  </svg>
-                  <p className="text-gray-600 font-medium">মা ও শিশুর স্বাস্থ্য পরিচর্যা</p>
-                </div>
-              </div>
+              <img 
+                src={heroImage} 
+                alt="MaCare - মা ও শিশুর স্বাস্থ্য পরিচর্যা" 
+                className="w-full h-auto rounded-xl"
+              />
             </div>
           </div>
         </div>
